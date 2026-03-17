@@ -1,9 +1,11 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ImageGenerationService {
-  static const String apiKey = '';
+  // static const String apiKey = '';
+  static final String? apiKey = dotenv.env['HF_TOKEN'];
 
   static Future<Uint8List> generateImage(String prompt) async {
     final url = Uri.parse(

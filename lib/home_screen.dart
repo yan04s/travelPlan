@@ -9,7 +9,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // State variables for all 5 travel parameters
   int _tripDuration = 3;
   double _travelBudget = 1000;
   int _numParticipants = 1;
@@ -25,6 +24,79 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  // Map budgetLabel to the matching travelType string
+  String _budgetSuggestedType(double v) {
+    if (v < 1500) return 'Budget';
+    if (v < 6000) return 'Mid-Range';
+    return 'Luxury';
+  }
+
+  // Called when slider drag ends — show dialog if suggestion differs
+  void _onBudgetChangeEnd(double v) {
+    final suggested = _budgetSuggestedType(v);
+    if (suggested != _travelType) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Text(_travelTypeEmoji(suggested),
+                  style: const TextStyle(fontSize: 24)),
+              const SizedBox(width: 8),
+              const Text('Change Travel Type?',
+                  style: TextStyle(fontSize: 17)),
+            ],
+          ),
+          content: RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                  fontSize: 14, color: Color(0xFF333333), height: 1.5),
+              children: [
+                const TextSpan(text: 'Your budget of '),
+                TextSpan(
+                  text: 'RM ${v.toStringAsFixed(0)}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const TextSpan(text: ' suits a '),
+                TextSpan(
+                  text: suggested,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: _budgetColor(v),
+                  ),
+                ),
+                const TextSpan(
+                    text: ' trip.\n\nWould you like to update your travel type to match?'),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Keep current',
+                  style: TextStyle(color: Color(0xFF888888))),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() => _travelType = suggested);
+                Navigator.pop(ctx);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1A73E8),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+              child: Text('Switch to $suggested',
+                  style: const TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   void _generatePlan() {
     if (_destinationController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -35,7 +107,6 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       return;
     }
-
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -115,11 +186,9 @@ class _HomeScreenState extends State<HomeScreen> {
               _circleButton(Icons.remove, onDecrement),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Text(
-                  '$value',
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+                child: Text('$value',
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold)),
               ),
               _circleButton(Icons.add, onIncrement),
             ],
@@ -151,9 +220,22 @@ class _HomeScreenState extends State<HomeScreen> {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 160,
+            expandedHeight: 80,
             pinned: true,
+            backgroundColor: const Color(0xFF1A73E8),
             flexibleSpace: FlexibleSpaceBar(
+              title: const Text(
+                '✈️  Travel Planner',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16),
+              ),
+              titlePadding: const EdgeInsetsDirectional.only(
+                start: 15,
+                bottom: 16,
+              ),
+              collapseMode: CollapseMode.parallax,
               background: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
@@ -164,35 +246,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                    padding: const EdgeInsets.fromLTRB(20, 5, 20, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
-                        SizedBox(height: 8),
-                        Text('✈️  Travel Planner',
-                            style: TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white)),
-                        SizedBox(height: 4),
                         Text('Configure your dream trip',
-                            style: TextStyle(
-                                fontSize: 14, color: Colors.white70)),
+                            style:
+                                TextStyle(fontSize: 14, color: Colors.white70)),
                       ],
                     ),
                   ),
                 ),
               ),
-              title: const Text(
-                'Travel Planner',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18),
-              ),
-              collapseMode: CollapseMode.parallax,
             ),
-            backgroundColor: const Color(0xFF1A73E8),
           ),
           SliverPadding(
             padding: const EdgeInsets.all(20),
@@ -226,8 +292,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       filled: true,
                       fillColor: Colors.white,
-                      contentPadding:
-                          const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 16, horizontal: 16),
                     ),
                   ),
                 ),
@@ -240,10 +306,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   subtitle: 'How long is your trip?',
                   value: _tripDuration,
                   icon: Icons.calendar_today_outlined,
-                  onDecrement: () =>
-                      setState(() => _tripDuration = (_tripDuration - 1).clamp(1, 30)),
-                  onIncrement: () =>
-                      setState(() => _tripDuration = (_tripDuration + 1).clamp(1, 30)),
+                  onDecrement: () => setState(
+                      () => _tripDuration = (_tripDuration - 1).clamp(1, 30)),
+                  onIncrement: () => setState(
+                      () => _tripDuration = (_tripDuration + 1).clamp(1, 30)),
                 ),
                 const SizedBox(height: 20),
 
@@ -293,13 +359,21 @@ class _HomeScreenState extends State<HomeScreen> {
                         max: 20000,
                         divisions: 198,
                         activeColor: const Color(0xFF1A73E8),
-                        onChanged: (v) => setState(() => _travelBudget = v),
+                        // Update value while dragging
+                        onChanged: (v) =>
+                            setState(() => _travelBudget = v),
+                        // ── Show dialog when user releases the slider ──
+                        onChangeEnd: _onBudgetChangeEnd,
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: const [
-                          Text('RM 200', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                          Text('RM 20,000', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                          Text('RM 200',
+                              style: TextStyle(
+                                  fontSize: 11, color: Colors.grey)),
+                          Text('RM 20,000',
+                              style: TextStyle(
+                                  fontSize: 11, color: Colors.grey)),
                         ],
                       ),
                     ],
@@ -310,21 +384,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 // ── Number of Participants ────────────────────────
                 _buildSectionTitle('👥  Number of Participants'),
                 _buildCounterCard(
-                  label: '$_numParticipants ${_numParticipants == 1 ? "Person" : "People"}',
+                  label:
+                      '$_numParticipants ${_numParticipants == 1 ? "Person" : "People"}',
                   subtitle: 'How many travellers?',
                   value: _numParticipants,
                   icon: Icons.people_outline,
-                  onDecrement: () =>
-                      setState(() => _numParticipants = (_numParticipants - 1).clamp(1, 20)),
-                  onIncrement: () =>
-                      setState(() => _numParticipants = (_numParticipants + 1).clamp(1, 20)),
+                  onDecrement: () => setState(() =>
+                      _numParticipants = (_numParticipants - 1).clamp(1, 20)),
+                  onIncrement: () => setState(() =>
+                      _numParticipants = (_numParticipants + 1).clamp(1, 20)),
                 ),
                 const SizedBox(height: 20),
 
                 // ── Type of Travel ────────────────────────────────
                 _buildSectionTitle('🏷️  Type of Travel'),
                 Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
@@ -346,7 +422,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             duration: const Duration(milliseconds: 200),
                             margin: const EdgeInsets.symmetric(
                                 horizontal: 6, vertical: 6),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
                               color: selected
                                   ? const Color(0xFF1A73E8)
